@@ -2,6 +2,7 @@
 import express from "express"; // création du serveur via Express
 import { graphqlHTTP } from "express-graphql"; // middleware pour utilisation de GraphQL
 import dotenv from "dotenv"; // permet la gestion des variables d'environnement
+import rateLimit from "express-rate-limit"; //
 dotenv.config(); // charge les variables d'environnement du fichier '.env'
 
 // schema + root
@@ -10,6 +11,15 @@ import root from "./resolvers"; // résolveurs contenant la logique de traitemen
 
 // instance d'application d'Express
 const app = express();
+
+// configuration du 'rate limiter'
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limite chaque IP à 100 requêtes par fenêtre
+});
+
+// utilisation du 'rate limiter' sur toutes les requêtes
+app.use(limiter);
 
 // configuration du middleware GraphQL
 app.use(

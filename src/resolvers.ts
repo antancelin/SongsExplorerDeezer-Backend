@@ -27,6 +27,58 @@ const root = {
       throw new Error("Unable to retrieve artist information"); // lance une erreur si la récupération échoue
     }
   },
+
+  searchTracks: async ({
+    query,
+    limit = 25,
+  }: {
+    query: string;
+    limit?: number;
+  }) => {
+    try {
+      // 1. Recherche des chansons via l'api Deezer
+      const deezerResponse = await axios.get(
+        `https://api.deezer.com/search?q=${encodeURIComponent(
+          query
+        )}&type=track&limit=${limit}`
+      );
+
+      // 2. Pour chaque piste, enrichir les données de l'artiste avec sa biographie
+
+      const enrichedTracks = await Promise.all(
+        deezerResponse.data.data.map(async (track: any) => {
+          try {
+            const artistBio = await root.getArtistBiography({
+              artistId: track.artist.id,
+            });
+            return {
+              ...track,
+              artist: {
+                ...track.artist,
+                biography: artistBio?.biography || null,
+              },
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching bio for artist ${track.artist.id}:`,
+              error
+            );
+            return track;
+          }
+        })
+      );
+
+      return {
+        date: enrichedTracks,
+        total: deezerResponse.data.total,
+        prev: deezerResponse.data.prev,
+        next: deezerResponse.data.next,
+      };
+    } catch (error) {
+      console.error("Error searching tracks:", error);
+      throw new Error("Unable to search tracks");
+    }
+  },
 };
 
 export default root; // export des résolveurs pour utilisation dans le serveur
