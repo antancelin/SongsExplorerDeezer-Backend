@@ -16,10 +16,14 @@ const app = express();
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limite chaque IP à 100 requêtes par fenêtre
+  message:
+    "Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes",
+  standardHeaders: true, // retourne les headers 'RateLimit-*' dans la réponse
+  legacyHeaders: false, // désactive les headers 'X-RateLimit-*'
 });
 
 // utilisation du 'rate limiter' sur toutes les requêtes
-app.use(limiter);
+app.use("/graphql", limiter);
 
 // configuration du middleware GraphQL
 app.use(

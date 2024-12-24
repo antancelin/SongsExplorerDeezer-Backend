@@ -15,14 +15,12 @@ const schema = buildSchema(`
     id: ID!
     title: String!
     cover: String
-    releaseDate: String
   }
 
   type Track {
     id: ID!
     title: String!
     duration: Int
-    releaseDate: String
     artist: Artist!
     album: Album
   }
@@ -36,9 +34,8 @@ const schema = buildSchema(`
 
   type Query {
     welcome: String
-    searcheTracks(query: String!, limit: Int): SearchResult!
+    searchTracks(query: String!, limit: Int): SearchResult!
     getTrackDetails(trackId: ID!): Track
-    getArtistBiography(artistId: ID!): Artist
   }
 `);
 

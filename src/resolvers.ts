@@ -1,13 +1,20 @@
 // packages
 import axios from "axios"; // import d'Axios pour les requêtes HTTP
+import { response } from "express";
 
 const root = {
   welcome: () => "Welcome to Songs Explorer w/ Deezer 🎧", // résolveur simple pour le message de bienvenue
 
-  getArtistBiography: async ({ artistId }: { artistId: number }) => {
+  // fonction utilitaire pour trouver un artiste et sa biographie sur Discogs
+  async getArtistBiography(artistName: string) {
     try {
-      const response = await axios.get(
-        `https://api.discogs.com/artists/${artistId}`, // url de l'API Discogs pour récuérer les données de l'artiste
+      // console.log("Searching for artist: ", artistName);
+
+      // 1. recherche de l'artiste sur Discogs
+      const searchResponse = await axios.get(
+        `https://api.discogs.com/database/search?type=artist&q=${encodeURIComponent(
+          artistName
+        )}`, // url de l'API Discogs pour récuérer les données de l'artiste
         {
           headers: {
             Authorization: `Discogs token=${process.env.DISCOGS_TOKEN}`, // token d'accès pour authentifier la requête auprès de l'API Discogs
@@ -15,19 +22,37 @@ const root = {
         }
       );
 
-      const artistData = response.data; // récupération des données de l'artiste depuis la réponse de l'API
+      // console.log("Discogs search response: ", searchResponse.data);
 
-      return {
-        id: artistData.id, // retourne l'ID de l'artiste
-        name: artistData.name, // retourne le nom de l'artiste
-        biography: artistData.profile, // retourne la biographie de l'artiste
-      };
+      // 2. prendre le premier résultat (le plus pertinent)
+      const firstResult = searchResponse.data.results[0];
+      if (!firstResult) {
+        // console.log("No results found for artist");
+        return null;
+      }
+
+      // console.log("Found artist ID: ", firstResult.id);
+
+      // 3. récupérer les détail complets de l'artiste
+      const artistResponse = await axios.get(
+        `https://api.discogs.com/artists/${firstResult.id}`,
+        {
+          headers: {
+            Authorization: `Discogs token=${process.env.DISCOGS_TOKEN}`, // token d'accès pour authentifier la requête auprès de l'API Discogs
+          },
+        }
+      );
+
+      // console.log("Artist profile: ", artistResponse.data.profile);
+
+      return artistResponse.data.profile; // retourne la biographie de l'artiste
     } catch (error) {
-      console.error("Error retrieving artist data :", error); // affiche une erreur dans la console en cas de problème
-      throw new Error("Unable to retrieve artist information"); // lance une erreur si la récupération échoue
+      console.error("Error finding artist on Discogs :", error); // affiche une erreur dans la console en cas de problème
+      return null;
     }
   },
 
+  // recherche simple de chansons
   searchTracks: async ({
     query,
     limit = 25,
@@ -38,38 +63,27 @@ const root = {
     try {
       // 1. Recherche des chansons via l'api Deezer
       const deezerResponse = await axios.get(
-        `https://api.deezer.com/search?q=${encodeURIComponent(
+        `https://api.deezer.com/search/track?q=${encodeURIComponent(
           query
-        )}&type=track&limit=${limit}`
-      );
-
-      // 2. Pour chaque piste, enrichir les données de l'artiste avec sa biographie
-
-      const enrichedTracks = await Promise.all(
-        deezerResponse.data.data.map(async (track: any) => {
-          try {
-            const artistBio = await root.getArtistBiography({
-              artistId: track.artist.id,
-            });
-            return {
-              ...track,
-              artist: {
-                ...track.artist,
-                biography: artistBio?.biography || null,
-              },
-            };
-          } catch (error) {
-            console.error(
-              `Error fetching bio for artist ${track.artist.id}:`,
-              error
-            );
-            return track;
-          }
-        })
+        )}&limit=${limit}`
       );
 
       return {
-        date: enrichedTracks,
+        data: deezerResponse.data.data.map((track: any) => ({
+          id: track.id,
+          title: track.title,
+          duration: track.duration,
+          artist: {
+            id: track.artist.id,
+            name: track.artist.name,
+            picture: track.artist.picture_medium,
+          },
+          album: {
+            id: track.album.id,
+            title: track.album.title,
+            cover: track.album.cover_medium,
+          },
+        })),
         total: deezerResponse.data.total,
         prev: deezerResponse.data.prev,
         next: deezerResponse.data.next,
@@ -77,6 +91,44 @@ const root = {
     } catch (error) {
       console.error("Error searching tracks:", error);
       throw new Error("Unable to search tracks");
+    }
+  },
+
+  // récupération détaillée d'une chanson spécifique
+  getTrackDetails: async ({ trackId }: { trackId: string }) => {
+    try {
+      // 1. récupérer les détails de la chanson depuis Deezer
+      const trackResponse = await axios.get(
+        `https://api.deezer.com/track/${trackId}`
+      );
+
+      const track = trackResponse.data;
+
+      // 2. récupérer la biographie de l'artiste depuis Discogs
+      const biography = await root.getArtistBiography(track.artist.name);
+
+      // 3. construire et retourner la réponse complète
+      return {
+        id: track.id,
+        title: track.title,
+        duration: track.duration,
+        releaseDate: track.release_date,
+        artist: {
+          id: track.artist.id,
+          name: track.artist.name,
+          picture: track.artist.picture_medium,
+          biography: biography,
+        },
+        album: {
+          id: track.album.id,
+          title: track.album.title,
+          cover: track.album.cover_medium,
+          releaseDate: track.album.release_date,
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching track details:", error);
+      throw new Error("Unable to fetch track details");
     }
   },
 };
