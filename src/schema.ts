@@ -34,7 +34,7 @@ const schema = buildSchema(`
 
   type Query {
     welcome: String
-    searchTracks(query: String!, limit: Int): SearchResult!
+    searchTracks(query: String!, limit: Int, index: Int): SearchResult!
     getTrackDetails(trackId: ID!): Track
   }
 `);

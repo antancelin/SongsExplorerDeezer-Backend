@@ -3,6 +3,7 @@ import express from "express"; // création du serveur via Express
 import { graphqlHTTP } from "express-graphql"; // middleware pour utilisation de GraphQL
 import dotenv from "dotenv"; // permet la gestion des variables d'environnement
 import rateLimit from "express-rate-limit"; //
+import cors from "cors"; // import des cors pour accès à la route
 dotenv.config(); // charge les variables d'environnement du fichier '.env'
 
 // schema + root
@@ -11,6 +12,9 @@ import root from "./resolvers"; // résolveurs contenant la logique de traitemen
 
 // instance d'application d'Express
 const app = express();
+
+// activation des cors pour accès à la route
+app.use(cors());
 
 // configuration du 'rate limiter'
 const limiter = rateLimit({

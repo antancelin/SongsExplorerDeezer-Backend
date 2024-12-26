@@ -55,17 +55,19 @@ const root = {
   // recherche simple de chansons
   searchTracks: async ({
     query,
-    limit = 25,
+    limit = 50,
+    index = 0,
   }: {
     query: string;
     limit?: number;
+    index?: number;
   }) => {
     try {
       // 1. Recherche des chansons via l'api Deezer
       const deezerResponse = await axios.get(
         `https://api.deezer.com/search/track?q=${encodeURIComponent(
           query
-        )}&limit=${limit}`
+        )}&limit=${limit}&index=${index}`
       );
 
       return {
