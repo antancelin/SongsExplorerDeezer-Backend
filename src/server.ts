@@ -38,9 +38,7 @@ app.use(
   })
 );
 
-const PORT = 3000; // port sur lequel le serveur écoutera
-
 // deméarrage du serveur et écoute des requêtes
-app.listen(PORT, () => {
-  console.log(`GraphQL server running on http://localhost:${PORT}/graphql 🚀`); // message de confirmation que le serveur fonctionne
+app.listen(process.env.PORT, () => {
+  console.log(`GraphQL server running 🚀`); // message de confirmation que le serveur fonctionne
 });
