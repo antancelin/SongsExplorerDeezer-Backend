@@ -14,13 +14,15 @@ const schema = buildSchema(`
   type Album {
     id: ID!
     title: String!
-    cover: String
+    coverSmall: String
+    coverBig: String
   }
 
   type Track {
     id: ID!
     title: String!
     duration: Int
+    explicit: Boolean!
     artist: Artist!
     album: Album
   }

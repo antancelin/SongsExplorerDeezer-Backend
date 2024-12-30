@@ -8,8 +8,6 @@ const root = {
   // fonction utilitaire pour trouver un artiste et sa biographie sur Discogs
   async getArtistBiography(artistName: string) {
     try {
-      // console.log("Searching for artist: ", artistName);
-
       // 1. recherche de l'artiste sur Discogs
       const searchResponse = await axios.get(
         `https://api.discogs.com/database/search?type=artist&q=${encodeURIComponent(
@@ -22,16 +20,12 @@ const root = {
         }
       );
 
-      // console.log("Discogs search response: ", searchResponse.data);
-
       // 2. prendre le premier résultat (le plus pertinent)
       const firstResult = searchResponse.data.results[0];
       if (!firstResult) {
         // console.log("No results found for artist");
         return null;
       }
-
-      // console.log("Found artist ID: ", firstResult.id);
 
       // 3. récupérer les détail complets de l'artiste
       const artistResponse = await axios.get(
@@ -43,9 +37,26 @@ const root = {
         }
       );
 
-      // console.log("Artist profile: ", artistResponse.data.profile);
+      // 4. nettoyer la biographie
+      const cleanBiography = (bio: string) => {
+        // Supprime les références [aXXXXXX]
+        return (
+          bio
+            // Supprime les références avec du texte entre [a=...] ou [l=...]
+            .replace(/\[(a|l)=[^\]]+\]/g, "")
+            // Remplace les retours à la ligne multiples par un saut de ligne simple
+            .replace(/\r\n\r\n/g, "\n")
+            // Remplace les retours à la ligne simples par des espaces
+            .replace(/\r\n/g, " ")
+            // Remplace les espaces multiples par un seul
+            .replace(/\s+/g, " ")
+            .trim()
+        );
+      };
 
-      return artistResponse.data.profile; // retourne la biographie de l'artiste
+      return artistResponse.data.profile
+        ? cleanBiography(artistResponse.data.profile)
+        : null; // retourne la biographie de l'artiste
     } catch (error) {
       console.error("Error finding artist on Discogs :", error); // affiche une erreur dans la console en cas de problème
       return null;
@@ -75,6 +86,7 @@ const root = {
           id: track.id,
           title: track.title,
           duration: track.duration,
+          explicit: track.explicit_lyrics,
           artist: {
             id: track.artist.id,
             name: track.artist.name,
@@ -83,7 +95,8 @@ const root = {
           album: {
             id: track.album.id,
             title: track.album.title,
-            cover: track.album.cover_medium,
+            coverSmall: track.album.cover_small,
+            coverBig: track.album.cover_big,
           },
         })),
         total: deezerResponse.data.total,
@@ -114,7 +127,7 @@ const root = {
         id: track.id,
         title: track.title,
         duration: track.duration,
-        releaseDate: track.release_date,
+        explicit: track.explicit_lyrics,
         artist: {
           id: track.artist.id,
           name: track.artist.name,
@@ -124,8 +137,8 @@ const root = {
         album: {
           id: track.album.id,
           title: track.album.title,
-          cover: track.album.cover_medium,
-          releaseDate: track.album.release_date,
+          coverSmall: track.album.cover_small,
+          coverBig: track.album.cover_big,
         },
       };
     } catch (error) {
