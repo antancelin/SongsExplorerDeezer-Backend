@@ -44,6 +44,49 @@ describe("GraphQL Resolvers", () => {
       const result = await root.getArtistBiography("artiste_avec_erreur");
       expect(result).toBeNull();
     });
+
+    it("devrait nettoyer correctement une biographie avec différents formats", async () => {
+      // Mock de la recherche d'artiste
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          results: [{ id: 123 }],
+        },
+      });
+
+      // Mock des détails de l'artiste avec une biographie complexe
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          profile:
+            "Cet artiste [a=Nom1] est connu\r\n\r\npour [l=Label1] sa musique.\r\nIl fait   des  choses   incroyables  ",
+        },
+      });
+
+      const result = await root.getArtistBiography("Artiste");
+
+      // La biographie devrait être nettoyée de tous les éléments spéciaux
+      expect(result).toBe(
+        "Cet artiste est connu pour sa musique. Il fait des choses incroyables"
+      );
+    });
+
+    it("devrait retourner null quand l'artiste est trouvé mais n'a pas de biographie", async () => {
+      // Mock de la recherche d'artiste - l'artiste est trouvé
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          results: [{ id: 123 }],
+        },
+      });
+
+      // Mock des détails de l'artiste - pas de biographie (profile est undefined)
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          // pas de champ 'profile'
+        },
+      });
+
+      const result = await root.getArtistBiography("Artiste");
+      expect(result).toBeNull();
+    });
   });
 
   // test pour la recherche de chansons

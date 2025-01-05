@@ -22,8 +22,8 @@ const limiter = rateLimit({
   max: 100, // limite chaque IP à 100 requêtes par fenêtre
   message:
     "Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes",
-  standardHeaders: true, // retourne les headers 'RateLimit-*' dans la réponse
-  legacyHeaders: false, // désactive les headers 'X-RateLimit-*'
+  standardHeaders: true, // retourne les headers dans la réponse, informe le client de son statut de limite
+  legacyHeaders: false, // désactive les anciens headers
 });
 
 // utilisation du 'rate limiter' sur toutes les requêtes
@@ -42,3 +42,6 @@ app.use(
 app.listen(process.env.PORT, () => {
   console.log(`GraphQL server running 🚀`); // message de confirmation que le serveur fonctionne
 });
+
+// Exporter l'application pour pouvoir l'utiliser dans les tests
+export default app;
