@@ -2,31 +2,31 @@
 import type { Config } from "jest";
 
 const config: Config = {
-  // utilisation de ts-jest pour gérer les fichiers 'typescript'
+  // using ts-jest to handle 'typescript' files
   preset: "ts-jest",
 
-  // environnment d'exécution des tests
+  // test execution environment
   testEnvironment: "node",
 
-  // pattern pour trouver les fichiers de test
+  // pattern to find test files
   testMatch: ["**/__tests__/**/*.test.ts"],
 
-  // configuration de la transformation des fichiers
+  // configuring file transformation
   transform: {
     "^.+\\.ts$": "ts-jest",
   },
 
-  // pour la gestion des modules dans les tests
+  // management of modules in tests
   moduleNameMapper: {
     ".+\\.ts$": "<rootDir>/src/$1",
   },
 
-  // couverture de code
+  // code coverage
   collectCoverage: true,
   coverageDirectory: "covergage",
   coverageReporters: ["text", "lcov"],
 
-  // fichiers à ignorer dans les tests
+  // files to ignore in tests
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };
 

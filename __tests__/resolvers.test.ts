@@ -2,7 +2,7 @@
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import axios from "axios";
 
-// configuration du mock d'axios
+// axios mock configuration
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -10,89 +10,89 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 import root from "../src/resolvers";
 
 describe("GraphQL Resolvers", () => {
-  // réinitialisation des mocks avant chaque test
+  // resetting mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  // test pour le message de bienvenue
+  // test for welcome message
   describe("welcome", () => {
-    it("devrait retourner le message de bienvenue", () => {
+    it("should return the welcome message", () => {
       const result = root.welcome();
       expect(result).toBe("Welcome to Songs Explorer w/ Deezer 🎧");
     });
   });
 
-  // test pour la récupération de la biographie via Discogs
+  // test for biography retrieval via Discogs
   describe("getArtistBiography", () => {
-    it("devrait retourner null quand aucun artiste n'est trouvé", async () => {
-      // mock de la recherche Discogs sans résultats
+    it("should return 'null' when no artist is found", async () => {
+      // mock of Discogs search with no results
       mockedAxios.get.mockResolvedValueOnce({
         data: {
-          results: [], // Aucun résultat
+          results: [], // no results
         },
       });
 
-      const result = await root.getArtistBiography("artiste_inexistant");
+      const result = await root.getArtistBiography("non-existent_artist");
       expect(result).toBeNull();
     });
 
-    it("devrait gérer les erreurs de l'API Discogs", async () => {
-      // simulation d'une erreur de l'API
+    it("should handle Discogs API errors", async () => {
+      // simulate an API error
       mockedAxios.get.mockRejectedValueOnce(new Error("Discogs API Error"));
 
-      const result = await root.getArtistBiography("artiste_avec_erreur");
+      const result = await root.getArtistBiography("artist_with_error");
       expect(result).toBeNull();
     });
 
-    it("devrait nettoyer correctement une biographie avec différents formats", async () => {
-      // Mock de la recherche d'artiste
+    it("should properly clean up a bio with different formats", async () => {
+      // artist search mockup
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           results: [{ id: 123 }],
         },
       });
 
-      // Mock des détails de l'artiste avec une biographie complexe
+      // mock artist details with a complex biography
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           profile:
-            "Cet artiste [a=Nom1] est connu\r\n\r\npour [l=Label1] sa musique.\r\nIl fait   des  choses   incroyables  ",
+            "This artist [a=Name1] is known\r\n\r\nfor [l=Label1] his music.\r\nHe  does   incredible   things",
         },
       });
 
-      const result = await root.getArtistBiography("Artiste");
+      const result = await root.getArtistBiography("artist");
 
-      // La biographie devrait être nettoyée de tous les éléments spéciaux
+      // the biography should be cleaned of any special elements
       expect(result).toBe(
-        "Cet artiste est connu pour sa musique. Il fait des choses incroyables"
+        "This artist is known for his music. He does incredible things"
       );
     });
 
-    it("devrait retourner null quand l'artiste est trouvé mais n'a pas de biographie", async () => {
-      // Mock de la recherche d'artiste - l'artiste est trouvé
+    it("should return null when artist is found but has no bio", async () => {
+      // artist search mockup - artist is found
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           results: [{ id: 123 }],
         },
       });
 
-      // Mock des détails de l'artiste - pas de biographie (profile est undefined)
+      // mock artist details - no bio (profile is undefined)
       mockedAxios.get.mockResolvedValueOnce({
         data: {
-          // pas de champ 'profile'
+          // no 'profile' field
         },
       });
 
-      const result = await root.getArtistBiography("Artiste");
+      const result = await root.getArtistBiography("artist");
       expect(result).toBeNull();
     });
   });
 
-  // test pour la recherche de chansons
+  // test for song search
   describe("searchTracks", () => {
-    it("devrait retourner une liste de chansons", async () => {
-      // préparation des données mockées
+    it("should return a list of songs", async () => {
+      // preparation of mocked data
       const mockData = {
         data: {
           data: [
@@ -114,10 +114,10 @@ describe("GraphQL Resolvers", () => {
         },
       };
 
-      // configuration du mock
+      // mock configuration
       mockedAxios.get.mockResolvedValueOnce(mockData);
 
-      // exécution de la fonction testée
+      // execution of the tested function
       const result = await root.searchTracks({ query: "formidable" });
 
       // assertions
@@ -126,21 +126,21 @@ describe("GraphQL Resolvers", () => {
       expect(result.data[0].artist.name).toBe("Stromae");
     });
 
-    it("devrait gérer les erreurs de recherche", async () => {
-      // simulation d'une erreur
+    it("should handle search errors", async () => {
+      // simulation of an error
       mockedAxios.get.mockRejectedValueOnce(new Error("API Error"));
 
-      // vérification de la gestion d'erreur
+      // checking error handling
       await expect(root.searchTracks({ query: "invalid" })).rejects.toThrow(
         "Unable to search tracks"
       );
     });
   });
 
-  // test pour les détails d'une chanson
+  // test for song details
   describe("getTrackDetails", () => {
-    it("devrait retourner les détails complets avec biographie", async () => {
-      // mock des réponses des APIs
+    it("should return full details with biography", async () => {
+      // mock API responses
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           id: 1,
@@ -172,20 +172,20 @@ describe("GraphQL Resolvers", () => {
       // mock Discogs artist details
       mockedAxios.get.mockResolvedValueOnce({
         data: {
-          profile: "Biographie de l'artiste",
+          profile: "Artist biography",
         },
       });
 
       const result = await root.getTrackDetails({ trackId: "1" });
 
-      // vérifications
+      // checks
       expect(result.title).toBe("Formidable");
-      expect(result.artist.biography).toBe("Biographie de l'artiste");
+      expect(result.artist.biography).toBe("Artist biography");
       expect(result.album.title).toBe("Racine Carrée");
     });
 
-    it("devrait gérer les erreurs de l'API Deezer", async () => {
-      // Simulation d'une erreur de l'API Deezer
+    it("should handle Deezer API errors", async () => {
+      // simulating a Deezer API error
       mockedAxios.get.mockRejectedValueOnce(new Error("Deezer API Error"));
 
       await expect(
@@ -193,8 +193,8 @@ describe("GraphQL Resolvers", () => {
       ).rejects.toThrow("Unable to fetch track details");
     });
 
-    it("devrait gérer le cas où la biographie n'est pas trouvée", async () => {
-      // Mock de la réponse Deezer
+    it("should handle the case where the biography is not found", async () => {
+      // mock the Deezer response
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           id: 1,
@@ -214,10 +214,10 @@ describe("GraphQL Resolvers", () => {
         },
       });
 
-      // Mock d'une recherche Discogs sans résultats
+      // mock a Discogs search with no results
       mockedAxios.get.mockResolvedValueOnce({
         data: {
-          results: [], // Aucun résultat pour la biographie
+          results: [], // no results for biography
         },
       });
 

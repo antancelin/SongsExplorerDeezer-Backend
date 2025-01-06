@@ -1,47 +1,43 @@
-// packages
-import express from "express"; // création du serveur via Express
-import { graphqlHTTP } from "express-graphql"; // middleware pour utilisation de GraphQL
-import dotenv from "dotenv"; // permet la gestion des variables d'environnement
-import rateLimit from "express-rate-limit"; //
-import cors from "cors"; // import des cors pour accès à la route
-dotenv.config(); // charge les variables d'environnement du fichier '.env'
+// packages import
+import express from "express";
+import { graphqlHTTP } from "express-graphql";
+import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
+dotenv.config();
 
-// schema + root
-import schema from "./schema"; // schéma GraphQL défini dans son propre fichier
-import root from "./resolvers"; // résolveurs contenant la logique de traitement des requêtes
+// schema + root import
+import schema from "./schema";
+import root from "./resolvers";
 
-// instance d'application d'Express
+// Express application instance
 const app = express();
 
-// activation des cors pour accès à la route
+// activation of cors for road access
 app.use(cors());
 
-// configuration du 'rate limiter'
+// 'rate limite' configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limite chaque IP à 100 requêtes par fenêtre
-  message:
-    "Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes",
-  standardHeaders: true, // retourne les headers dans la réponse, informe le client de son statut de limite
-  legacyHeaders: false, // désactive les anciens headers
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again in 15 minutes",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-// utilisation du 'rate limiter' sur toutes les requêtes
+// use of 'rate limit' on all queries
 app.use("/graphql", limiter);
 
-// configuration du middleware GraphQL
+// GraphQL middleware configuration
 app.use(
-  "/graphql", // point d'accès pour les requêtes GraphQL
+  "/graphql",
   graphqlHTTP({
-    schema: schema, // le schéma à utiliser
-    rootValue: root, // les résolveurs à utiliser pour traiter les requêtes
+    schema: schema,
+    rootValue: root,
   })
 );
 
-// deméarrage du serveur et écoute des requêtes
+// starting the server and listening for requests
 app.listen(process.env.PORT, () => {
-  console.log(`GraphQL server running 🚀`); // message de confirmation que le serveur fonctionne
+  console.log(`GraphQL server running 🚀`); // log message to confirm server startup
 });
-
-// Exporter l'application pour pouvoir l'utiliser dans les tests
-export default app;
