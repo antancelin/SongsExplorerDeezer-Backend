@@ -39,5 +39,5 @@ app.use(
 
 // starting the server and listening for requests
 app.listen(process.env.PORT, () => {
-  console.log(`GraphQL server running 🚀`); // log message to confirm server startup
+  console.log(`GraphQL server running 🎧`); // log message to confirm server startup
 });
